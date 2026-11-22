@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="lt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Forest Eye</title>
+<meta name="theme-color" content="#0e1712">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px)}body{margin:0}</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: one-hand phone app. Header (name + data status), one scrolling column, fixed bottom tab bar with 3 tabs. */
+:root{
+  --bg:#0e1712; --surf:#15221a; --surf2:#1b2c21; --line:#27392d;
+  --fg:#e8f0ea; --mut:#93a99b; --acc:#58c987; --acc-ink:#07140c; --warm:#eb9a45; --bad:#e5655b;
+  --font-d:"Space Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-b:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){--bg:#f1f5ef;--surf:#ffffff;--surf2:#e8efe6;--line:#d3dfd2;--fg:#13241a;--mut:#5a7061;--acc:#1b7a46;--acc-ink:#ffffff;--warm:#c2570c;--bad:#b3362d;color-scheme:light}
+}
+:root[data-theme="light"]{--bg:#f1f5ef;--surf:#ffffff;--surf2:#e8efe6;--line:#d3dfd2;--fg:#13241a;--mut:#5a7061;--acc:#1b7a46;--acc-ink:#ffffff;--warm:#c2570c;--bad:#b3362d;color-scheme:light}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 14px/1.5 var(--font-b);
+  padding-block:0 92px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  -webkit-text-size-adjust:100%}
+.wrap{max-width:640px;margin:0 auto}
+h1,h2,h3{font-family:var(--font-d);margin:0;text-wrap:balance;letter-spacing:-.01em}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+
+header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0 10px}
+header.top h1{font-size:22px;font-weight:700}
+header.top .sub{color:var(--mut);font-size:12px;margin-top:2px}
+.icon-btn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--surf);display:grid;place-items:center;flex:none}
+.icon-btn svg{width:20px;height:20px;stroke:var(--fg);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+.banner{display:flex;gap:10px;align-items:flex-start;border:1px solid color-mix(in srgb,var(--warm) 55%,transparent);background:color-mix(in srgb,var(--warm) 12%,transparent);border-radius:12px;padding:10px 12px;font-size:12.5px;margin:6px 0 12px}
+.banner b{font-weight:600}
+
+section.tab{display:none;padding-top:6px}
+section.tab.on{display:block}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:14px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);font-weight:600}
+.muted{color:var(--mut)}
+.small{font-size:12px}
+
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;scroll-snap-type:x proximity;margin-inline:-2px}
+.chip{flex:none;border:1px solid var(--line);background:var(--surf);border-radius:12px;padding:8px 12px;min-width:58px;text-align:center;scroll-snap-align:start}
+.chip .d1{font-size:11px;color:var(--mut)} .chip .d2{font-weight:600;font-family:var(--font-d)}
+.chip.on{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)} .chip.on .d1{color:inherit;opacity:.8}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surf);border-radius:999px;padding:6px 12px;font-size:13px;white-space:nowrap}
+.pill.on{background:var(--acc);border-color:var(--acc);color:var(--acc-ink);font-weight:600}
+.btn{border:0;border-radius:12px;padding:11px 16px;font-weight:600;background:var(--acc);color:var(--acc-ink);min-height:44px}
+.btn.warm{background:var(--warm);color:#1a0d02}
+.btn.ghost{background:var(--surf2);color:var(--fg);border:1px solid var(--line)}
+.btn[disabled]{opacity:.55}
+select,.field{width:100%;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surf);padding:8px 10px;appearance:none;-webkit-appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--mut) 50%),linear-gradient(135deg,var(--mut) 50%,transparent 50%);background-position:calc(100% - 18px) 55%,calc(100% - 13px) 55%;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
+.field{background-image:none;padding-right:10px}
+textarea.field{min-height:90px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid2>*{min-width:0}
+
+/* forecast */
+.best{border-color:color-mix(in srgb,var(--acc) 60%,var(--line));background:linear-gradient(180deg,color-mix(in srgb,var(--acc) 10%,var(--surf)),var(--surf))}
+.best h2{font-size:20px;margin:4px 0 6px}
+.advice li{margin:4px 0}
+.advice{padding-left:18px;margin:8px 0 0}
+.cam{display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:center}
+.cam .rk{font-family:var(--font-d);font-weight:700;font-size:20px;color:var(--mut);width:22px}
+.cam .nm{font-weight:600;font-family:var(--font-d)}
+.cam .bio{color:var(--mut);font-size:12px;min-width:0;overflow-wrap:anywhere}
+.cam .sc{font-family:var(--font-d);font-weight:700;font-size:24px;text-align:right}
+.cam .sc small{font-size:12px;color:var(--mut);font-weight:500}
+.meter{grid-column:1/-1;height:6px;border-radius:99px;background:var(--surf2);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--acc);border-radius:99px}
+.facts{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 12px;font-size:12.5px;margin-top:6px}
+.facts span{color:var(--mut)} .facts b{font-weight:500;color:var(--fg)}
+.facts .wide{grid-column:1/-1}
+
+/* analytics */
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.kpi{background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:12px}
+.kpi b{display:block;font:700 26px/1.1 var(--font-d)} .kpi span{font-size:12px;color:var(--mut)}
+.bars{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+.br{display:grid;grid-template-columns:92px 1fr 44px;gap:8px;align-items:center;font-size:12.5px}
+.br .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.br .b{height:10px;border-radius:99px;background:var(--surf2);overflow:hidden}
+.br .b i{display:block;height:100%;background:var(--acc);border-radius:99px}
+.br .v{text-align:right;color:var(--mut)}
+.cols{display:flex;align-items:flex-end;gap:3px;height:120px;margin-top:12px}
+.cols .c{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%;min-width:0}
+.cols .c i{display:block;width:100%;background:var(--acc);border-radius:4px 4px 0 0;min-height:2px}
+.cols .c em{font-style:normal;font-size:10px;color:var(--mut);line-height:1}
+.cols.hours .c em{font-size:9px}
+.axis{display:flex;justify-content:space-between;font-size:10px;color:var(--mut);margin-top:6px}
+
+/* inat */
+.mapbox{height:300px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--surf2);position:relative}
+#map{width:100%;height:100%}
+.zoom{position:absolute;right:10px;top:10px;z-index:900;display:flex;flex-direction:column;gap:6px}
+.zoom button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--surf);font-size:20px;line-height:1}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mut)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.list{display:flex;flex-direction:column;gap:6px;max-height:360px;overflow-y:auto}
+.item{display:grid;grid-template-columns:1fr auto;gap:2px 10px;text-align:left;width:100%;border:1px solid var(--line);background:var(--surf);border-radius:12px;padding:9px 11px}
+.item.sel{border-color:var(--acc)}
+.item .n{font-weight:600;min-width:0;overflow-wrap:anywhere} .item .dt{color:var(--mut);font-size:12px}
+.item .pl{color:var(--mut);font-size:12px;min-width:0;overflow-wrap:anywhere}
+.tag{font-size:11px;border-radius:99px;padding:1px 8px;border:1px solid var(--line);color:var(--mut);justify-self:end;white-space:nowrap}
+.tag.warm{color:var(--warm);border-color:var(--warm)}
+.summary p{margin:6px 0}
+
+/* nav + sheet */
+nav.bar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);border-top:1px solid var(--line);
+  padding:6px max(10px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px))}
+nav.bar .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+nav.bar button{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;border-radius:12px;color:var(--mut);font-size:11.5px;font-weight:500}
+nav.bar svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav.bar button.on{color:var(--acc)} nav.bar button.on span{font-weight:600}
+.scrim{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:100%;max-width:640px;max-height:88%;overflow-y:auto;background:var(--bg);border:1px solid var(--line);border-radius:18px 18px 0 0;padding:16px max(16px,env(safe-area-inset-left,0px)) calc(20px + env(safe-area-inset-bottom,0px))}
+.sheet h2{font-size:18px;margin-bottom:10px}
+.msg{font-size:12.5px;margin-top:8px;color:var(--mut);overflow-wrap:anywhere}
+.msg.err{color:var(--bad)} .msg.ok{color:var(--acc)}
+.sp{height:12px}
+
+/* leaflet essentials (the stylesheet itself cannot be loaded here) */
+.leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-tile-container,.leaflet-pane>svg,.leaflet-pane>canvas,.leaflet-zoom-box,.leaflet-layer{position:absolute;left:0;top:0}
+.leaflet-container{overflow:hidden;position:relative;touch-action:none;outline:0;-webkit-tap-highlight-color:transparent}
+.leaflet-tile,.leaflet-marker-icon{user-select:none;-webkit-user-drag:none}
+.leaflet-container img.leaflet-tile{max-width:none!important;max-height:none!important}
+.leaflet-tile-pane{z-index:200}.leaflet-overlay-pane{z-index:400}.leaflet-marker-pane{z-index:600}
+.leaflet-map-pane canvas{z-index:100}.leaflet-map-pane svg{z-index:200}
+.leaflet-tile{visibility:hidden}.leaflet-tile-loaded{visibility:inherit}
+.leaflet-zoom-animated{transform-origin:0 0}
+.leaflet-zoom-anim .leaflet-zoom-animated{transition:transform .25s cubic-bezier(0,0,.25,1)}
+.leaflet-fade-anim .leaflet-tile{will-change:opacity}
+.leaflet-interactive{cursor:pointer}
+@media (prefers-reduced-motion:reduce){.leaflet-zoom-anim .leaflet-zoom-animated{transition:none}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Forest Eye</h1>
+      <div class="sub" id="dbline">Dzūkijos kamerų tinklas</div>
+    </div>
+    <button class="icon-btn" id="gear" aria-label="Duomenys ir nustatymai">
+      <svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg>
+    </button>
+  </header>
+  <div id="demoBanner" class="banner" hidden><div><b>Demo duomenys.</b> Tai sugeneruoti pavyzdžiai. Savo duomenis įkelk per duomenų mygtuką viršuje dešinėje (.xlsx eksportas iš kompiuterinės programos).</div></div>
+
+  <!-- 1. PROGNOZĖ -->
+  <section class="tab" id="tab-prognoze">
+    <div class="label">Išvykos diena</div>
+    <div class="chips" id="dateChips"></div>
+    <div class="row" style="margin-bottom:10px">
+      <button class="btn warm" id="fcRun">Atnaujinti prognozę</button>
+      <span class="small muted" id="fcInfo"></span>
+    </div>
+    <div class="stack" id="fcOut"></div>
+  </section>
+
+  <!-- 2. ANALITIKA -->
+  <section class="tab" id="tab-analitika">
+    <div class="label">Kamera</div>
+    <div class="chips" id="camChips"></div>
+    <div class="stack" id="stOut"></div>
+  </section>
+
+  <!-- 3. INATURALIST -->
+  <section class="tab" id="tab-inaturalist">
+    <div class="stack">
+      <div class="grid2">
+        <div><div class="label">Žinduolis</div><select id="inSp" aria-label="Žinduolis"></select></div>
+        <div><div class="label">Teritorija</div><select id="inArea" aria-label="Teritorija"><option value="lt">Visa Lietuva</option><option value="dz">Dzūkija (38 km)</option></select></div>
+        <div><div class="label">Metų laikas</div><select id="inSeason" aria-label="Metų laikas"></select></div>
+        <div><div class="label">Mėnuo</div><select id="inMonth" aria-label="Mėnuo"></select></div>
+      </div>
+      <div class="row"><button class="btn warm" id="inGo">Traukti / Atnaujinti</button><span class="small muted" id="inStatus">Paspausk mygtuką, kad parsisiųstų duomenis.</span></div>
+      <div class="row" id="layerPills"></div>
+      <div class="mapbox"><div id="map"></div>
+        <div class="zoom"><button id="zin" aria-label="Priartinti">+</button><button id="zout" aria-label="Atitolinti">&minus;</button></div>
+      </div>
+      <div class="legend"><span><i class="dot" style="background:var(--acc)"></i>Tiksli vieta</span><span><i class="dot" style="background:var(--warm)"></i>Apytiksl. (saugoma rūšis)</span><span><i class="dot" style="border:2px solid var(--fg)"></i>Tavo kameros</span></div>
+      <div class="small muted" id="mapCredit">Žemėlapis: OpenStreetMap, Esri, OpenTopoMap. Duomenys: iNaturalist.</div>
+      <div class="card summary" id="inSummary"><span class="muted">Čia pasirodys santrauka ir palyginimas su tavo kameromis.</span></div>
+      <div class="card" id="inSel" hidden></div>
+      <div class="list" id="inList"></div>
+    </div>
+  </section>
+</div>
+
+<nav class="bar" aria-label="Skirtukai"><div class="in">
+  <button data-tab="prognoze"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg><span>Prognozė</span></button>
+  <button data-tab="analitika"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg><span>Analitika</span></button>
+  <button data-tab="inaturalist"><svg viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.800 12 21 12 21z"/><circle cx="12" cy="9.500" r="2.500"/></svg><span>iNaturalist</span></button>
+</div></nav>
+
+<div class="scrim" id="sheetScrim" hidden>
+  <div class="sheet" role="dialog" aria-label="Duomenys">
+    <h2>Duomenys telefone</h2>
+    <div class="card small" id="dbInfo"></div>
+    <div class="sp"></div>
+    <div class="label">Importuoti Excel (.xlsx) arba atsarginę kopiją (.json)</div>
+    <input class="field" type="file" id="fileIn" accept=".xlsx,.xls,.json">
+    <div class="msg" id="importMsg">Tinka ForestEye_eksportas_*.xlsx iš kompiuterinės programos (lapai Stebejimai, Kameros, Paros_orai) arba originali Excel lentelė.</div>
+    <div class="sp"></div>
+    <div class="label">Atsarginė kopija</div>
+    <div class="row"><button class="btn ghost" id="exCopy">Kopijuoti JSON</button><button class="btn ghost" id="exShow">Rodyti tekstą</button></div>
+    <textarea class="field" id="exText" hidden readonly></textarea>
+    <div class="msg" id="exMsg"></div>
+    <div class="sp"></div>
+    <div class="row"><button class="btn ghost" id="resetDemo">Grąžinti demo duomenis</button><button class="btn" id="sheetClose">Uždaryti</button></div>
+    <div class="msg" id="resetMsg"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function(){
+"use strict";
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pad=n=>String(n).padStart(2,"0");
+const isoLocal=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+/* ---------- reference data (same as desktop app) ---------- */
+const SP_LABEL={BRIEDIS:"Briedis",ELNIAS:"Elnias",STIRNA:"Stirna",VILKAS:"Vilkas",STUMBRAS:"Stumbras",USURINIS_SUO:"Usūrinis šuo",LUSIS:"Lūšis",BARSUKAS:"Barsukas",SERNAS:"Šernas",VOVERE:"Voverė",BEBRAS:"Bebras",KISKIS:"Kiškis",UDRA:"Ūdra","LAPĖ":"Lapė",KITA:"Kita"};
+const lbl=c=>SP_LABEL[c]||c;
+const INAT=[
+ ["Visi laukiniai Lietuvos žinduoliai","Mammalia",null],["Vilkas (Canis lupus)","Canis lupus","VILKAS"],["Lūšis (Lynx lynx)","Lynx lynx","LUSIS"],
+ ["Stumbras (Bison bonasus)","Bison bonasus","STUMBRAS"],["Briedis (Alces alces)","Alces alces","BRIEDIS"],["Taurusis elnias (Cervus elaphus)","Cervus elaphus","ELNIAS"],
+ ["Stirna (Capreolus capreolus)","Capreolus capreolus","STIRNA"],["Šernas (Sus scrofa)","Sus scrofa","SERNAS"],["Barsukas (Meles meles)","Meles meles","BARSUKAS"],
+ ["Ūdra (Lutra lutra)","Lutra lutra","UDRA"],["Bebras (Castor fiber)","Castor fiber","BEBRAS"],["Usūrinis šuo (Nyctereutes procyonoides)","Nyctereutes procyonoides","USURINIS_SUO"],
+ ["Rudoji lapė (Vulpes vulpes)","Vulpes vulpes","LAPĖ"],["Pilkasis kiškis (Lepus europaeus)","Lepus europaeus","KISKIS"],["Paprastoji voverė (Sciurus vulgaris)","Sciurus vulgaris","VOVERE"]];
+const SCI_LT={"Canis lupus":"Vilkas","Lynx lynx":"Lūšis","Bison bonasus":"Stumbras","Alces alces":"Briedis","Cervus elaphus":"Taurusis elnias","Capreolus capreolus":"Stirna","Sus scrofa":"Šernas","Meles meles":"Barsukas","Lutra lutra":"Ūdra","Castor fiber":"Bebras","Nyctereutes procyonoides":"Usūrinis šuo","Vulpes vulpes":"Rudoji lapė","Lepus europaeus":"Pilkasis kiškis","Lepus timidus":"Baltasis kiškis","Sciurus vulgaris":"Paprastoji voverė","Martes martes":"Miškinė kiaunė","Martes foina":"Akmeninė kiaunė","Mustela putorius":"Juodasis šeškas","Neogale vison":"Kanadinė audinė","Erinaceus roumanicus":"Šiaurinis ežys","Talpa europaea":"Kurmis","Ondatra zibethicus":"Ondatra"};
+const DOMESTIC=new Set(["Canis lupus familiaris","Felis catus","Equus caballus","Bos taurus","Ovis aries","Capra hircus","Sus scrofa domesticus"]);
+const SEASONS=[["Visi metų laikai",null],["Žiema (Grd–Vas)",[12,1,2]],["Pavasaris (Kov–Geg)",[3,4,5]],["Vasara (Bir–Rgp)",[6,7,8]],["Ruduo (Rgs–Lap)",[9,10,11]]];
+const MONTHS=["Visi mėnesiai","Sausis","Vasaris","Kovas","Balandis","Gegužė","Birželis","Liepa","Rugpjūtis","Rugsėjis","Spalis","Lapkritis","Gruodis"];
+const WD=["Sek","Pir","Ant","Tre","Ket","Pen","Šeš"];
+const SAFE_RARE=new Set(["VILKAS","LUSIS","STUMBRAS"]);
+
+/* ---------- astronomy (ported from desktop app) ---------- */
+function haversine(a,b,c,d){const r=6371,R=Math.PI/180,p1=a*R,p2=c*R,dp=(c-a)*R,dl=(d-b)*R;const x=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;return 2*r*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))}
+function lastSunday(y,m){const d=new Date(Date.UTC(y,m+1,0));return d.getUTCDate()-d.getUTCDay()}
+function ltOffset(y,m,d){const a=lastSunday(y,2),b=lastSunday(y,9);const v=m*100+d;return (v>=200+a&&v<900+b)?3:2}
+function moon(y,mo,d,h,mi){
+  const ref=Date.UTC(2000,0,6,18,14,0), t=Date.UTC(y,mo-1,d,h,mi,0);
+  const P=29.53058867, days=(t-ref)/86400000, cyc=(((days%P)+P)%P)/P;
+  const ill=Math.round((1-Math.cos(2*Math.PI*cyc))/2*1000)/10;
+  let ph; if(cyc<.0625||cyc>=.9375)ph="Jaunatis";else if(cyc<.1875)ph="Jaunas mėnulis";else if(cyc<.3125)ph="Priešpilnis";else if(cyc<.4375)ph="Prieš pilnatį";else if(cyc<.5625)ph="Pilnatis";else if(cyc<.6875)ph="Po pilnaties";else if(cyc<.8125)ph="Delčia";else ph="Senas mėnulis";
+  return {ill,ph};
+}
+function sun(lat,lon,y,mo,d,h,mi){
+  const doy=Math.floor((Date.UTC(y,mo-1,d)-Date.UTC(y,0,0))/86400000), tz=ltOffset(y,mo-1,d);
+  const g=2*Math.PI/365*(doy-1);
+  const eq=229.18*(0.000075+0.001868*Math.cos(g)-0.032077*Math.sin(g)-0.014615*Math.cos(2*g)-0.040849*Math.sin(2*g));
+  const dec=0.006918-0.399912*Math.cos(g)+0.070257*Math.sin(g)-0.006758*Math.cos(2*g)+0.000907*Math.sin(2*g)-0.002697*Math.cos(3*g)+0.00148*Math.sin(3*g);
+  const la=lat*Math.PI/180, z=90.833*Math.PI/180;
+  const ch=Math.max(-1,Math.min(1,Math.cos(z)/(Math.cos(la)*Math.cos(dec))-Math.tan(la)*Math.tan(dec)));
+  const ha=Math.acos(ch)*180/Math.PI;
+  const sr=(720-4*(lon+ha)-eq+tz*60)/60, ss=(720-4*(lon-ha)-eq+tz*60)/60;
+  const td=h+mi/60, f=x=>pad(Math.floor(x))+":"+pad(Math.floor((x%1)*60));
+  return {light:(td>=sr-.5&&td<=ss+.5)?"SVIESU":"TAMSA",sr:f(sr),ss:f(ss)};
+}
+const parseYMD=s=>{const p=String(s).slice(0,10).split("-").map(Number);return p};
+
+/* ---------- storage (IndexedDB; falls back to memory) ---------- */
+let mem={};
+function idb(){return new Promise((res,rej)=>{try{const r=indexedDB.open("forest-eye-beta",1);r.onupgradeneeded=()=>r.result.createObjectStore("kv");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}})}
+async function kvGet(k){try{const db=await idb();return await new Promise((res,rej)=>{const q=db.transaction("kv").objectStore("kv").get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}catch(e){return mem[k]}}
+async function kvSet(k,v){mem[k]=v;try{const db=await idb();await new Promise((res,rej)=>{const t=db.transaction("kv","readwrite");t.objectStore("kv").put(v,k);t.oncomplete=res;t.onerror=()=>rej(t.error)});return true}catch(e){return false}}
+
+/* ---------- demo data ---------- */
+function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function pick(R,w){const e=Object.entries(w),tot=e.reduce((a,b)=>a+b[1],0);let x=R()*tot;for(const [k,v] of e){x-=v;if(x<=0)return k}return e[0][0]}
+function genDemo(){
+  const R=rng(42);
+  const kameros=[
+    {kamera_id:"CAM_01",lat:54.0937,lon:24.4821,stovejo_nuo:"2025-10-01",stovejo_iki:"2027-01-01",biotopas:"Pušynas prie ežero, smėlėtas takas"},
+    {kamera_id:"CAM_02",lat:54.0312,lon:24.5410,stovejo_nuo:"2025-10-01",stovejo_iki:"2027-01-01",biotopas:"Miško kelias šalia raisto"},
+    {kamera_id:"CAM_03",lat:54.0655,lon:24.6012,stovejo_nuo:"2025-10-01",stovejo_iki:"2027-01-01",biotopas:"Pelkės pakraštys, mišrus miškas"},
+    {kamera_id:"CAM_05",lat:54.0128,lon:24.4403,stovejo_nuo:"2025-10-01",stovejo_iki:"2027-01-01",biotopas:"Upelio slėnis, pašalusi pieva"}];
+  const W={CAM_01:{STIRNA:5,BRIEDIS:3,SERNAS:4,"LAPĖ":2,KISKIS:2},CAM_02:{ELNIAS:4,SERNAS:5,VILKAS:1,STIRNA:3,BARSUKAS:2},CAM_03:{BEBRAS:3,UDRA:2,BRIEDIS:4,USURINIS_SUO:3,STIRNA:2},CAM_05:{STIRNA:4,"LAPĖ":3,SERNAS:3,VOVERE:2,LUSIS:1}};
+  const stebejimai=[],paros=[], start=new Date(2025,9,1);
+  for(const c of kameros){
+    for(let i=0;i<410;i++){
+      const dt=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i), ds=isoLocal(dt);
+      const season=.5+.5*Math.sin((dt.getMonth()+1-4)/12*2*Math.PI);
+      const had=R()<.16+.22*season, n=had?1+Math.floor(R()*3):0;
+      paros.push({kamera_id:c.kamera_id,data_only:ds,ar_buvo_gyvunas:had?1:0,fiksavimu_sk:n});
+      for(let k=0;k<n;k++){
+        const r=R(); let h=r<.4?5+Math.floor(R()*4):r<.7?17+Math.floor(R()*4):(21+Math.floor(R()*8))%24;
+        const mi=Math.floor(R()*60), y=dt.getFullYear(), mo=dt.getMonth()+1, d=dt.getDate();
+        const m=moon(y,mo,d,h,mi), s=sun(c.lat,c.lon,y,mo,d,h,mi);
+        stebejimai.push({kamera_id:c.kamera_id,data:ds,laikas:pad(h)+":"+pad(mi)+":00",gyvunas:pick(R,W[c.kamera_id]),skaicius:1+Math.floor(R()*2),paros_sviesa:s.light,menulio_pct:m.ill,menulio_faze:m.ph});
+      }
+    }
+  }
+  return {demo:true,kameros,stebejimai,paros};
+}
+
+/* ---------- import ---------- */
+const normKey=k=>String(k).trim().toLowerCase().replace(/\s+/g,"_");
+const normRow=r=>{const o={};for(const k in r)o[normKey(k)]=r[k];return o};
+function toDate(v){if(v==null||v==="")return "";if(v instanceof Date){return isoLocal(new Date(v.getTime()+30000))}return String(v).slice(0,10)}
+function toTime(v){if(v==null||v==="")return "00:00:00";if(v instanceof Date){const d=new Date(v.getTime()+30000);return pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds())}let t=String(v).trim();if(t.includes(" "))t=t.split(" ")[1];t=t.replace(/-/g,":");return t.length===5?t+":00":t.slice(0,8)}
+function importWorkbook(buf){
+  const wb=XLSX.read(buf,{type:"array",cellDates:true});
+  const find=n=>wb.SheetNames.find(s=>s.toLowerCase()===n);
+  const rows=n=>{const s=find(n);return s?XLSX.utils.sheet_to_json(wb.Sheets[s],{defval:null}).map(normRow):null};
+  let obsR=rows("stebejimai"), camR=rows("kameros"), dayR=rows("paros_orai")||rows("visos_paros_su_orais");
+  if(!obsR){ // original spreadsheet layout
+    const first=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:null}).map(normRow);
+    obsR=first.filter(r=>r.data&&r.gyvunas).map(r=>({kamera_id:r.kamera,data:r.data,laikas:r.laikas,gyvunas:r.gyvunas,skaicius:r.gyvunu_skaicius,lytis:r.gyvuno_lytis,elgsena:r.elgsena,paros_sviesa:r.paros_sviesa,menulio_pct:r["menulio_%"],menulio_faze:r.menulio_faze,_lat:r["lat_(n)"],_lon:r["long_(e)"],_bio:r.biotopas,_nuo:r["stovej__nuo"]||r.stovejo_nuo,_iki:r.stovejo_iki}));
+    if(!camR){const seen={};camR=[];obsR.forEach(r=>{if(r.kamera_id&&!seen[r.kamera_id]&&r._lat!=null){seen[r.kamera_id]=1;camR.push({kamera_id:r.kamera_id,lat:r._lat,lon:r._lon,stovejo_nuo:r._nuo,stovejo_iki:r._iki,biotopas:r._bio})}})}
+  }
+  if(!obsR||!obsR.length)throw new Error("Nerasta stebėjimų lentelė (lapas „Stebejimai“ arba stulpeliai DATA / GYVUNAS).");
+  if(!camR||!camR.length)throw new Error("Nerasta kamerų lentelė (lapas „Kameros“).");
+  const kameros=camR.filter(r=>r.kamera_id&&r.lat!=null).map(r=>({kamera_id:String(r.kamera_id),lat:+r.lat,lon:+r.lon,stovejo_nuo:toDate(r.stovejo_nuo),stovejo_iki:toDate(r.stovejo_iki),biotopas:r.biotopas||""}));
+  const cm={};kameros.forEach(c=>cm[c.kamera_id]=c);
+  const stebejimai=obsR.filter(r=>r.kamera_id&&r.data&&r.gyvunas).map(r=>{
+    const data=toDate(r.data), laikas=toTime(r.laikas), c=cm[r.kamera_id];
+    let light=r.paros_sviesa, ill=r.menulio_pct, ph=r.menulio_faze;
+    if(!light||ill==null||!ph){const [y,m,d]=parseYMD(data),[h,mi]=laikas.split(":").map(Number),mm=moon(y,m,d,h,mi);ill=ill==null?mm.ill:ill;ph=ph||mm.ph;if(!light&&c)light=sun(c.lat,c.lon,y,m,d,h,mi).light}
+    return {kamera_id:String(r.kamera_id),data,laikas,gyvunas:String(r.gyvunas).trim(),skaicius:r.skaicius==null?1:+r.skaicius,lytis:r.lytis||null,elgsena:r.elgsena||null,paros_sviesa:light||"",menulio_pct:ill,menulio_faze:ph};
+  });
+  let paros;
+  if(dayR&&dayR.length){paros=dayR.filter(r=>r.kamera_id&&r.data_only).map(r=>({kamera_id:String(r.kamera_id),data_only:toDate(r.data_only),ar_buvo_gyvunas:+r.ar_buvo_gyvunas?1:0,fiksavimu_sk:+r.fiksavimu_sk||0}))}
+  else{ // no daily sheet: derive from camera date ranges
+    paros=[];const byCam={};stebejimai.forEach(o=>{(byCam[o.kamera_id]=byCam[o.kamera_id]||{})[o.data]=(byCam[o.kamera_id][o.data]||0)+1});
+    for(const cid in byCam){const ds=Object.keys(byCam[cid]).sort();let a=new Date(ds[0]),b=new Date(ds[ds.length-1]);for(let d=a;d<=b;d=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1)){const s=isoLocal(d),n=byCam[cid][s]||0;paros.push({kamera_id:cid,data_only:s,ar_buvo_gyvunas:n?1:0,fiksavimu_sk:n})}}
+  }
+  return {demo:false,kameros,stebejimai,paros,importedAt:new Date().toISOString()};
+}
+
+/* ---------- app state ---------- */
+let DB=null, tab="prognoze";
+const forecastDates=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()+i);return d});
+let fcDate=isoLocal(forecastDates[1]), wxCache={}, fcFailed=false, fcLoading=false;
+let statCam="ALL";
+
+function updateChrome(){
+  $("#demoBanner").hidden=!DB.demo;
+  $("#dbline").textContent=(DB.demo?"Demo · ":"")+DB.kameros.length+" kameros · "+DB.stebejimai.length+" įrašų";
+}
+function setTab(t){
+  tab=t;
+  $$("section.tab").forEach(s=>s.classList.toggle("on",s.id==="tab-"+t));
+  $$("nav.bar button").forEach(b=>{b.classList.toggle("on",b.dataset.tab===t);b.setAttribute("aria-current",b.dataset.tab===t?"page":"false")});
+  if(location.hash!=="#"+t){try{history.replaceState(null,"","#"+t)}catch(e){location.hash=t}}
+  window.scrollTo(0,0);
+  if(t==="analitika")renderStats();
+  if(t==="inaturalist")showInat();
+  if(t==="prognoze"&&!Object.keys(wxCache).length&&!fcLoading)loadForecast();
+}
+
+/* ---------- FORECAST ---------- */
+function renderChips(){
+  $("#dateChips").innerHTML=forecastDates.map(d=>{const s=isoLocal(d);return `<button class="chip ${s===fcDate?"on":""}" data-d="${s}"><div class="d1">${WD[d.getDay()]}</div><div class="d2 num">${pad(d.getMonth()+1)}-${pad(d.getDate())}</div></button>`}).join("");
+}
+async function loadForecast(){
+  fcLoading=true; fcFailed=false; wxCache={};
+  $("#fcInfo").textContent="Kraunama 7 dienų prognozė…"; $("#fcRun").disabled=true;
+  const cams=DB.kameros.filter(c=>c.kamera_id!=="CAM_04");
+  const res=await Promise.allSettled(cams.map(async c=>{
+    const u="https://api.open-meteo.com/v1/forecast?latitude="+c.lat.toFixed(5)+"&longitude="+c.lon.toFixed(5)+"&forecast_days=7&hourly=temperature_2m,precipitation,snow_depth,pressure_msl,wind_speed_10m,wind_gusts_10m&wind_speed_unit=ms&timezone=Europe%2FVilnius";
+    const r=await fetch(u); if(!r.ok)throw new Error("HTTP "+r.status);
+    wxCache[c.kamera_id]=(await r.json()).hourly;
+  }));
+  fcFailed=res.every(x=>x.status==="rejected");
+  fcLoading=false; $("#fcRun").disabled=false;
+  renderForecast();
+}
+function dayWeather(cid,dateStr){
+  const h=wxCache[cid]; if(!h)return null;
+  const idx=[];h.time.forEach((t,i)=>{if(t.slice(0,10)===dateStr){const hr=+t.slice(11,13);if(hr>=7&&hr<=16)idx.push(i)}});
+  if(!idx.length)return null;
+  const avg=idx.reduce((a,i)=>a+h.temperature_2m[i],0)/idx.length;
+  const gust=Math.max(...idx.map(i=>h.wind_gusts_10m[i]||0));
+  const snow=Math.max(...idx.map(i=>h.snow_depth[i]||0))*100;
+  const pd=h.pressure_msl[idx[idx.length-1]]-h.pressure_msl[idx[0]];
+  return {avg:Math.round(avg*10)/10,gust:Math.round(gust*10)/10,snow:Math.round(snow*10)/10,pd:Math.round(pd*10)/10};
+}
+function renderForecast(){
+  renderChips();
+  const [y,mo,d]=parseYMD(fcDate), m9=moon(y,mo,d,9,0), month=mo;
+  const out=[];
+  for(const c of DB.kameros.filter(c=>c.kamera_id!=="CAM_04")){
+    const cid=c.kamera_id, w=dayWeather(cid,fcDate), has=!!w, W=w||{avg:0,gust:5,snow:0,pd:0};
+    const s=sun(c.lat,c.lon,y,mo,d,9,0);
+    const cd=DB.paros.filter(p=>p.kamera_id===cid&&+p.data_only.slice(5,7)===month);
+    let base; if(cd.length>=10)base=cd.reduce((a,p)=>a+p.ar_buvo_gyvunas,0)/cd.length*100;
+    else{const ca=DB.paros.filter(p=>p.kamera_id===cid);base=ca.length?ca.reduce((a,p)=>a+p.ar_buvo_gyvunas,0)/ca.length*100:15}
+    let mult=1;
+    // camera-specific snow rules from the desktop app
+    if(W.snow>10){if(cid==="CAM_01"||cid==="CAM_02")mult*=.25;else if(cid==="CAM_05")mult*=2.2}
+    else if(W.snow>=.2){if(cid==="CAM_01")mult*=1.65;else if(cid==="CAM_05")mult*=2.5}
+    if(Math.abs(W.pd)>4)mult*=.65;else if(W.pd<=-1.5)mult*=1.2;
+    if(["Prieš pilnatį","Pilnatis","Po pilnaties"].includes(m9.ph))mult*=1.15;
+    const adj=Math.min(85,Math.max(1,Math.round(base*mult*10)/10)), score=Math.min(99,Math.max(5,Math.round(adj*2.1)));
+    const cnt={};DB.stebejimai.filter(o=>o.kamera_id===cid).forEach(o=>cnt[o.gyvunas]=(cnt[o.gyvunas]||0)+1);
+    const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>lbl(k)+" ("+v+")").join(", ")||"nėra įrašų";
+    const tend=W.pd<=-1.5?"Kritantis":W.pd>=1.5?"Kylantis":"Stabilus";
+    out.push({cid,bio:c.biotopas||"",score,adj,W,has,s,top,tend});
+  }
+  out.sort((a,b)=>b.score-a.score);
+  const best=out[0], h=[];
+  $("#fcInfo").textContent=fcFailed?"Prognozės gauti nepavyko":"Mėnulis: "+m9.ph+" ("+m9.ill+"%)";
+  if(fcFailed)h.push(`<div class="banner"><div><b>Nėra orų duomenų.</b> Open-Meteo nepasiekiamas (nėra ryšio arba užblokuota). Indeksas skaičiuojamas tik pagal istoriją, be sniego ir slėgio.</div></div>`);
+  if(best){
+    h.push(`<div class="card best"><div class="label">Rekomendacija ${esc(fcDate)}</div><h2>${esc(best.cid)} · ${best.score}/100</h2>
+      <div class="muted">${esc(best.bio)}</div>
+      <ul class="advice">
+        <li>1 paros tikimybė: <b class="num">${best.adj.toFixed(1)} %</b></li>
+        <li>Sniegas ${best.W.snow.toFixed(1)} cm · slėgis ${esc(best.tend.toLowerCase())} (${best.W.pd>=0?"+":""}${best.W.pd.toFixed(1)} hPa) · ${best.W.avg>=0?"+":""}${best.W.avg.toFixed(1)}°C</li>
+        <li>Šviesus langas ${best.s.sr} – ${best.s.ss}. Atvykti likus 20 min. iki saulėtekio ir būti pirmąsias 2,5 val.</li>
+        <li>Tikėtiniausi kadrai: ${esc(best.top)}</li></ul></div>`);
+  }
+  out.forEach((r,i)=>h.push(`<div class="card cam"><div class="rk num">${i+1}</div><div style="min-width:0"><div class="nm">${esc(r.cid)}</div><div class="bio">${esc(r.bio)}</div></div>
+    <div class="sc num">${r.score}<small>/100</small></div><div class="meter"><i style="width:${r.score}%"></i></div>
+    <div class="facts"><div><span>Tikimybė</span><br><b class="num">${r.adj.toFixed(1)} %</b></div><div><span>T° / gūsiai</span><br><b class="num">${r.has?(r.W.avg>=0?"+":"")+r.W.avg.toFixed(1)+"°C · "+r.W.gust.toFixed(1)+" m/s":"—"}</b></div>
+    <div><span>Sniegas</span><br><b class="num">${r.has?r.W.snow.toFixed(1)+" cm":"—"}</b></div><div><span>Slėgis</span><br><b class="num">${r.has?r.tend+" ("+(r.W.pd>=0?"+":"")+r.W.pd.toFixed(1)+")":"—"}</b></div>
+    <div><span>Šviesos langas</span><br><b class="num">${r.s.sr} – ${r.s.ss}</b></div><div><span>Rūšys</span><br><b>${esc(r.top)}</b></div></div></div>`));
+  $("#fcOut").innerHTML=h.join("");
+}
+
+/* ---------- ANALYTICS ---------- */
+function barsHTML(entries,max){return `<div class="bars">`+entries.map(([k,v])=>`<div class="br"><div class="t">${esc(k)}</div><div class="b"><i style="width:${max?Math.max(2,v/max*100):0}%"></i></div><div class="v num">${v}</div></div>`).join("")+`</div>`}
+function renderStats(){
+  const cams=["ALL",...DB.kameros.map(c=>c.kamera_id)];
+  $("#camChips").innerHTML=cams.map(c=>`<button class="pill ${c===statCam?"on":""}" data-c="${esc(c)}">${c==="ALL"?"Visos":esc(c)}</button>`).join("");
+  const obs=statCam==="ALL"?DB.stebejimai:DB.stebejimai.filter(o=>o.kamera_id===statCam);
+  if(!obs.length){$("#stOut").innerHTML=`<div class="card muted">Šiai kamerai įrašų nėra.</div>`;return}
+  const light=obs.filter(o=>o.paros_sviesa==="SVIESU").length;
+  const count=f=>{const m={};obs.forEach(o=>{const k=f(o);m[k]=(m[k]||0)+1});return m};
+  const sp=Object.entries(count(o=>o.gyvunas)).sort((a,b)=>b[1]-a[1]);
+  const cm=Object.entries(count(o=>o.kamera_id)).sort((a,b)=>b[1]-a[1]);
+  const mo=count(o=>+o.data.slice(5,7)), hr=count(o=>+String(o.laikas).slice(0,2));
+  const mMax=Math.max(...Object.values(mo)), hMax=Math.max(...Object.values(hr));
+  const mn=["S","V","K","B","G","B","L","R","R","S","L","G"];
+  const months=mn.map((l,i)=>{const v=mo[i+1]||0;return `<div class="c"><em class="num">${v||""}</em><i style="height:${mMax?v/mMax*78:0}%"></i><em>${l}</em></div>`}).join("");
+  const hours=Array.from({length:24},(_,i)=>{const v=hr[i]||0;return `<div class="c"><i style="height:${hMax?v/hMax*100:0}%" title="${i}:00 · ${v}"></i></div>`}).join("");
+  const ph=Object.entries(count(o=>o.menulio_faze||"—")).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  $("#stOut").innerHTML=`
+    <div class="kpis"><div class="kpi"><b class="num">${obs.length}</b><span>įrašų</span></div><div class="kpi"><b class="num">${sp.length}</b><span>rūšių</span></div>
+      <div class="kpi"><b class="num">${(light/obs.length*100).toFixed(0)} %</b><span>šviesoje (tinka fotografuoti)</span></div><div class="kpi"><b class="num">${cm.length}</b><span>kamerų su įrašais</span></div></div>
+    <div class="card"><h3>Pagal rūšis</h3>${barsHTML(sp.slice(0,10).map(([k,v])=>[lbl(k),v]),sp[0][1])}</div>
+    ${statCam==="ALL"?`<div class="card"><h3>Pagal kamerą</h3>${barsHTML(cm,cm[0][1])}</div>`:""}
+    <div class="card"><h3>Pagal mėnesį</h3><div class="cols">${months}</div><div class="small muted" style="margin-top:6px">Visų metų įrašai sudėti pagal kalendorinį mėnesį.</div></div>
+    <div class="card"><h3>Pagal paros valandą</h3><div class="cols hours">${hours}</div><div class="axis"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div></div>
+    <div class="card"><h3>Pagal mėnulio fazę</h3>${barsHTML(ph,ph[0][1])}</div>`;
+}
+
+/* ---------- iNATURALIST ---------- */
+let map=null, tileLayer=null, markerLayer=null, camLayer=null, layerKey="sat", inCache={}, inFiltered=[], inSel=-1, inBusy=false, placeId;
+const TILES={sat:["Palydovas","https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",19],topo:["Reljefas","https://a.tile.opentopomap.org/{z}/{x}/{y}.png",17],osm:["Keliai","https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",19]};
+function fillSelects(){
+  $("#inSp").innerHTML=INAT.map((s,i)=>`<option value="${i}">${esc(s[0])}</option>`).join("");
+  $("#inSeason").innerHTML=SEASONS.map((s,i)=>`<option value="${i}">${esc(s[0])}</option>`).join("");
+  $("#inMonth").innerHTML=MONTHS.map((s,i)=>`<option value="${i}">${i?i+" - ":""}${esc(s)}</option>`).join("");
+  $("#layerPills").innerHTML=Object.entries(TILES).map(([k,v])=>`<button class="pill ${k===layerKey?"on":""}" data-l="${k}">${v[0]}</button>`).join("");
+}
+function showInat(){
+  if(!map){
+    if(typeof L==="undefined"){$("#map").innerHTML=`<div class="muted" style="padding:16px">Žemėlapio biblioteka neįsikėlė.</div>`;return}
+    map=L.map("map",{zoomControl:false,attributionControl:false,preferCanvas:true,zoomSnap:.5}).setView([55.2,23.9],7);
+    setTiles(layerKey);
+    markerLayer=L.layerGroup().addTo(map); camLayer=L.layerGroup().addTo(map);
+    drawCams();
+  }
+  setTimeout(()=>map&&map.invalidateSize(),60);
+}
+function setTiles(k){layerKey=k;if(!map)return;if(tileLayer)map.removeLayer(tileLayer);tileLayer=L.tileLayer(TILES[k][1],{maxZoom:TILES[k][2]}).addTo(map);$$("#layerPills .pill").forEach(p=>p.classList.toggle("on",p.dataset.l===k))}
+function drawCams(){if(!camLayer)return;camLayer.clearLayers();DB.kameros.forEach(c=>L.circleMarker([c.lat,c.lon],{radius:5,color:css("--fg"),weight:2,fill:false,opacity:.9}).addTo(camLayer))}
+async function getPlace(){
+  if(placeId!==undefined)return placeId;
+  try{const r=await fetch("https://api.inaturalist.org/v1/places/autocomplete?q=Lithuania&per_page=10");const j=await r.json();const p=(j.results||[]).find(x=>x.admin_level===0&&/^(lithuania|lietuva)$/i.test(x.name||""));placeId=p?p.id:null}catch(e){placeId=null}
+  return placeId;
+}
+function parseItem(it){
+  let lat=null,lon=null;
+  if(it.geojson&&it.geojson.coordinates){lon=+it.geojson.coordinates[0];lat=+it.geojson.coordinates[1]}
+  else if(it.location){const p=String(it.location).split(",");lat=+p[0];lon=+p[1]}
+  if(lat==null||isNaN(lat)||isNaN(lon))return null;
+  if(!(lat>=53.85&&lat<=56.48&&lon>=20.9&&lon<=26.9))return null;
+  const t=it.taxon||{}, sci=t.name||"Nežinoma"; if(DOMESTIC.has(sci))return null;
+  const lt=SCI_LT[sci]||t.preferred_common_name||sci, od=it.observed_on||"";
+  const mo=od.length>=7?parseInt(od.slice(5,7),10):null, ob=!!it.obscured;
+  return {lat,lon,data:od||"—",month:isNaN(mo)?null:mo,rusis:lt!==sci?lt+" ("+sci+")":sci,lt,vieta:((it.place_guess||"Lietuva")+"").replace(/, (Lithuania|Lietuva|LT)$/,"").slice(0,40),obscured:ob,patv:it.quality_grade==="research"};
+}
+function demoInat(taxon){
+  const R=rng(7+taxon.length), pool=taxon==="Mammalia"?INAT.slice(1).map(s=>s[1]):[taxon], out=[];
+  for(let i=0;i<60;i++){
+    const sci=pool[Math.floor(R()*pool.length)], lat=53.95+R()*2.4, lon=21.2+R()*5.4, dz=R()<.35;
+    const la=dz?54.05+(R()-.5)*.5:lat, lo=dz?24.5+(R()-.5)*.8:lon, dt=new Date(Date.now()-R()*400*86400000);
+    const ob=SAFE_RARE.has((INAT.find(s=>s[1]===sci)||[])[2]);
+    out.push({lat:la,lon:lo,data:isoLocal(dt),month:dt.getMonth()+1,rusis:SCI_LT[sci]+" ("+sci+")",lt:SCI_LT[sci],vieta:"Demo vieta",obscured:ob,patv:R()<.6});
+  }
+  return out.sort((a,b)=>b.data.localeCompare(a.data));
+}
+async function inatGo(force){
+  const idx=+$("#inSp").value, taxon=INAT[idx][1];
+  if(!force&&inCache[taxon]){applyInat();return}
+  if(inBusy)return; inBusy=true; $("#inGo").disabled=true; $("#inStatus").textContent="Siunčiami Lietuvos duomenys iš iNaturalist…";
+  try{
+    const pid=await getPlace(), items=[]; let total=0;
+    for(let page=1;page<=2;page++){
+      const q=new URLSearchParams({taxon_name:taxon,per_page:"200",page:String(page),order_by:"observed_on",order:"desc",geo:"true"});
+      if(pid)q.set("place_id",pid);else{q.set("nelat","56.45");q.set("nelng","26.85");q.set("swlat","53.89");q.set("swlng","20.93")}
+      const r=await fetch("https://api.inaturalist.org/v1/observations?"+q);
+      if(!r.ok)throw new Error("HTTP "+r.status);
+      const j=await r.json(); if(page===1)total=j.total_results||0;
+      const b=j.results||[]; items.push(...b); if(b.length<200)break;
+    }
+    inCache[taxon]={total,items:items.map(i=>{try{return parseItem(i)}catch(e){return null}}).filter(Boolean),demo:false,err:null};
+  }catch(e){
+    inCache[taxon]={total:0,items:demoInat(taxon),demo:true,err:(e&&e.message)||String(e)};
+  }
+  inBusy=false; $("#inGo").disabled=false; applyInat();
+}
+function applyInat(){
+  if(!map)showInat();
+  const taxon=INAT[+$("#inSp").value][1], code=INAT[+$("#inSp").value][2], c=inCache[taxon];
+  if(!c){$("#inStatus").textContent="Paspausk „Traukti / Atnaujinti“.";return}
+  const mSel=+$("#inMonth").value||null, sMon=SEASONS[+$("#inSeason").value][1], dz=$("#inArea").value==="dz";
+  inFiltered=c.items.filter(r=>{
+    if(mSel&&r.month!==mSel)return false;
+    if(!mSel&&sMon&&!sMon.includes(r.month))return false;
+    if(dz&&haversine(54.05,24.5,r.lat,r.lon)>38)return false;
+    return true});
+  let loc=DB.stebejimai.filter(o=>{const m=+o.data.slice(5,7);return mSel?m===mSel:sMon?sMon.includes(m):true});
+  if(code)loc=loc.filter(o=>o.gyvunas===code);
+  if(map){
+    markerLayer.clearLayers(); drawCams();
+    inFiltered.slice(0,150).forEach((r,i)=>{
+      const col=r.obscured?css("--warm"):css("--acc");
+      L.circleMarker([r.lat,r.lon],{radius:7,color:css("--bg"),weight:1.5,fillColor:col,fillOpacity:.9}).on("click",()=>selectRec(i,false)).addTo(markerLayer);
+    });
+    if(dz)map.setView([54.05,24.5],10);else map.setView([55.2,23.9],7);
+  }
+  $("#inStatus").textContent=c.demo?"Demo taškai (API nepasiekiamas)":"Parodyta "+inFiltered.length+" iš "+c.items.length+" naujausių. Archyve: "+c.total+".";
+  const cnt={};inFiltered.forEach(r=>cnt[r.lt]=(cnt[r.lt]||0)+1);
+  const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>esc(k)+" ("+v+")").join(", ");
+  const obsc=inFiltered.filter(r=>r.obscured).length, per=mSel?MONTHS[mSel]:SEASONS[+$("#inSeason").value][0];
+  let lt={},best="—"; loc.forEach(o=>{lt[o.gyvunas]=(lt[o.gyvunas]||0)+1});
+  const lTop=Object.entries(lt).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>esc(lbl(k))+" ("+v+")").join(", ")||"nėra įrašų";
+  if(loc.length){const cc={};loc.forEach(o=>cc[o.kamera_id]=(cc[o.kamera_id]||0)+1);best=Object.entries(cc).sort((a,b)=>b[1]-a[1])[0][0]}
+  $("#inSummary").innerHTML=(c.demo?`<div class="msg err" style="margin:0 0 8px">${c.err?"Klaida: "+esc(c.err)+". ":""}Rodomi sugeneruoti demo taškai, ne tikri stebėjimai.</div>`:"")+
+    (inFiltered.length?`<div class="label">Santrauka · ${esc(per)}</div><p>Atrinkta <b class="num">${inFiltered.length}</b> stebėjimų. Dažniausi: ${top||"—"}.</p>
+    <p>${obsc} iš ${inFiltered.length} įrašų turi apytiksles koordinates (saugomos rūšys, iki ~15 km paklaida).</p>
+    <div class="label" style="margin-top:10px">Palyginimas su tavo kameromis</div><p>Šiuo periodu dominuoja: ${lTop}.</p><p>Perspektyviausia kamera: <b>${esc(best)}</b>.</p>`
+    :`<p class="muted">Pagal šį filtrą įrašų nerasta tarp ${c.items.length} naujausių. Pasirink konkretų žinduolį, pvz. Vilkas, Briedis ar Lūšis, ir paspausk „Traukti“.</p>`);
+  inSel=-1; $("#inSel").hidden=true;
+  $("#inList").innerHTML=inFiltered.slice(0,150).map((r,i)=>`<button class="item" data-i="${i}"><div class="n">${esc(r.rusis)}</div><div class="tag ${r.obscured?"warm":""}">${r.obscured?"Apytiksl.":"Tiksli"}</div><div class="pl">${esc(r.vieta)}</div><div class="dt num" style="justify-self:end">${esc(r.data)}</div></button>`).join("");
+}
+function selectRec(i,fly){
+  const r=inFiltered[i]; if(!r)return; inSel=i;
+  $$("#inList .item").forEach(b=>b.classList.toggle("sel",+b.dataset.i===i));
+  const card=$("#inSel"); card.hidden=false;
+  card.innerHTML=`<div class="label">Pasirinktas stebėjimas</div><div style="font-weight:600;margin-top:2px">${esc(r.rusis)}</div><div class="muted small">${esc(r.data)} · ${esc(r.vieta)} · ${r.obscured?"apytikslė vieta":"tiksli vieta"} · ${r.patv?"patvirtinta":"laukiama patvirtinimo"}</div>`;
+  if(map&&fly!==false)map.setView([r.lat,r.lon],r.obscured?10:13);
+  if(fly===false)card.scrollIntoView({block:"nearest",behavior:"smooth"});
+}
+
+/* ---------- settings sheet ---------- */
+function openSheet(){
+  $("#dbInfo").innerHTML=`<b>${DB.demo?"Demo duomenys":"Tavo duomenys"}</b><br>${DB.kameros.length} kameros · ${DB.stebejimai.length} stebėjimų · ${DB.paros.length} parų${DB.importedAt?"<br>Importuota: "+esc(DB.importedAt.slice(0,16).replace("T"," ")):""}<br><span class="muted">Saugoma tik šioje naršyklėje šiame telefone.</span>`;
+  $("#sheetScrim").hidden=false;
+}
+async function commit(db,msgEl,okText){
+  DB=db; const ok=await kvSet("db",DB);
+  wxCache={}; inCache={}; updateChrome(); drawCams&&drawCams(); renderForecast(); renderStats(); if(tab==="inaturalist")applyInat();
+  msgEl.className="msg "+(ok?"ok":"err");
+  msgEl.textContent=okText+(ok?"":" Naršyklė neleido išsaugoti, duomenys bus prarasti uždarius puslapį.");
+  if(tab==="prognoze")loadForecast();
+}
+$("#fileIn").addEventListener("change",async e=>{
+  const f=e.target.files[0], msg=$("#importMsg"); if(!f)return;
+  msg.className="msg"; msg.textContent="Skaitoma…";
+  try{
+    let db;
+    if(/\.json$/i.test(f.name)){db=JSON.parse(await f.text());if(!db.kameros||!db.stebejimai||!db.paros)throw new Error("Neatpažintas JSON formatas.");db.demo=false}
+    else{if(typeof XLSX==="undefined")throw new Error("Excel bibliotekos nepavyko įkelti.");db=importWorkbook(await f.arrayBuffer())}
+    await commit(db,msg,"Įkelta: "+db.kameros.length+" kameros, "+db.stebejimai.length+" stebėjimų, "+db.paros.length+" parų.");
+    openSheet();
+  }catch(err){msg.className="msg err";msg.textContent="Importas nepavyko: "+(err.message||err)}
+  e.target.value="";
+});
+$("#exShow").addEventListener("click",()=>{const t=$("#exText");t.value=JSON.stringify(DB);t.hidden=false;t.select()});
+$("#exCopy").addEventListener("click",async()=>{
+  const m=$("#exMsg"),t=$("#exText");t.value=JSON.stringify(DB);
+  try{await navigator.clipboard.writeText(t.value);m.className="msg ok";m.textContent="Nukopijuota. Įklijuok į užrašus ar failą kaip atsarginę kopiją."}
+  catch(e){t.hidden=false;t.select();m.className="msg";m.textContent="Kopijavimas neleidžiamas. Pažymėtą tekstą nukopijuok rankiniu būdu."}
+});
+let resetArmed=false;
+$("#resetDemo").addEventListener("click",async()=>{
+  const b=$("#resetDemo"),m=$("#resetMsg");
+  if(!resetArmed){resetArmed=true;b.textContent="Patvirtinti ištrynimą";m.className="msg err";m.textContent="Tavo importuoti duomenys bus pakeisti demo duomenimis.";return}
+  resetArmed=false;b.textContent="Grąžinti demo duomenis";await commit(genDemo(),m,"Įkelti demo duomenys.");openSheet();
+});
+$("#sheetClose").addEventListener("click",()=>{$("#sheetScrim").hidden=true});
+$("#sheetScrim").addEventListener("click",e=>{if(e.target.id==="sheetScrim")$("#sheetScrim").hidden=true});
+$("#gear").addEventListener("click",openSheet);
+
+/* ---------- events ---------- */
+$$("nav.bar button").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.tab)));
+$("#dateChips").addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;fcDate=b.dataset.d;renderForecast()});
+$("#fcRun").addEventListener("click",loadForecast);
+$("#camChips").addEventListener("click",e=>{const b=e.target.closest(".pill");if(!b)return;statCam=b.dataset.c;renderStats()});
+$("#inGo").addEventListener("click",()=>inatGo(true));
+["#inSp"].forEach(s=>$(s).addEventListener("change",()=>inatGo(false)));
+["#inArea","#inMonth"].forEach(s=>$(s).addEventListener("change",applyInat));
+$("#inSeason").addEventListener("change",()=>{if(+$("#inSeason").value)$("#inMonth").value="0";applyInat()});
+$("#layerPills").addEventListener("click",e=>{const b=e.target.closest(".pill");if(b)setTiles(b.dataset.l)});
+$("#inList").addEventListener("click",e=>{const b=e.target.closest(".item");if(b)selectRec(+b.dataset.i,true)});
+$("#zin").addEventListener("click",()=>map&&map.zoomIn());
+$("#zout").addEventListener("click",()=>map&&map.zoomOut());
+window.addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(["prognoze","analitika","inaturalist"].includes(t)&&t!==tab)setTab(t)});
+
+/* ---------- boot ---------- */
+(async function(){
+  fillSelects();
+  let saved=await kvGet("db");
+  DB=(saved&&saved.kameros&&saved.stebejimai&&saved.paros)?saved:genDemo();
+  if(!saved)kvSet("db",DB);
+  updateChrome(); renderChips();
+  const t=location.hash.slice(1);
+  setTab(["prognoze","analitika","inaturalist"].includes(t)?t:"prognoze");
+})();
+})();
+</script>
+<script>
+if("serviceWorker"in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}
+</script>
+</body>
+</html>
