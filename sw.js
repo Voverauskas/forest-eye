@@ -1,4 +1,4 @@
-const V="forest-eye-v1";
+const V="forest-eye-v2";
 const SHELL=["./","./index.html","./manifest.webmanifest","./icon-192.png",
   "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js",
   "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"];
